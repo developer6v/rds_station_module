@@ -4,6 +4,7 @@ include_once('../../../../../init.php');
 use WHMCS\Database\Capsule;
 
 require_once __DIR__ . '/../Services/rds_station/core/delete_lead.php';
+require_once __DIR__ . '/../Services/whmcs/delete_lead_from_database.php';
 
 header('Content-Type: text/plain; charset=utf-8');
 
@@ -22,6 +23,7 @@ if (empty($leads)) {
 
 foreach ($leads as $email) {
     $res = rd_delete_contact_by_email((string)$email);
+    $res = sr_rds_delete_lead_by_email((string)$email);
     $code = is_array($res) && isset($res['code']) ? $res['code'] : null;
     echo $email . " => HTTP " . ($code ?? '0') . "\n";
 }
