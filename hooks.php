@@ -6,32 +6,24 @@ use WHMCS\Database\Capsule;
 
 
 
-add_hook('AfterShoppingCartCheckout', 1, function(array $vars) {
+add_hook('ClientAdd', 1, function(array $vars) {
 
-    $orderId = (int) ($vars['OrderID'] ?? 0);
-    if ($orderId <= 0) {
+    // Vars entregues pelo hook:
+    $userId   = (int)($vars['userid'] ?? 0);
+    $email    = (string)($vars['email'] ?? '');
+    $name     = trim(($vars['firstname'] ?? '') . ' ' . ($vars['lastname'] ?? ''));
+    $phone    = (string)($vars['phonenumber'] ?? '');
+    $company  = (string)($vars['companyname'] ?? '');
+    $city     = (string)($vars['city'] ?? '');
+    $state    = (string)($vars['state'] ?? '');
+    $country  = (string)($vars['country'] ?? '');
+
+    if ($userId <= 0 || $email === '') {
         return;
     }
 
-    // Pedido -> cliente
-    $order = Capsule::table('tblorders')->where('id', $orderId)->first();
-    if (!$order) {
-        return;
-    }
 
-    $client = Capsule::table('tblclients')->where('id', $order->userid)->first();
-    if (!$client) {
-        return;
-    }
-
-    $email = (string) ($client->email ?? '');
-    if ($email === '') {
-        return;
-    }
-
-    $conversionIdentifier = 'API_Cliente_Novo'; 
-    $name  = trim(($client->firstname ?? '') . ' ' . ($client->lastname ?? ''));
-    $phone = (string) ($client->phonenumber ?? '');
+    $conversionIdentifier = 'API_Cliente_Novo';
 
     $resp = rd_send_conversion(
         $conversionIdentifier,
@@ -40,21 +32,21 @@ add_hook('AfterShoppingCartCheckout', 1, function(array $vars) {
         $phone ?: null,
         ['whmcs'],
         'whmcs',
-        null, 
-        null, 
-        null, 
-        null, 
-        null, 
-        (string) ($client->city ?? null),
-        (string) ($client->state ?? null),
-        (string) ($client->country ?? null),
-        (string) ($client->companyname ?? null),
-        null  
+        null,           
+        null,            
+        null,        
+        null,            
+        null,         
+        $city ?: null,
+        $state ?: null,
+        $country ?: null,
+        $company ?: null,
+        null       
     );
+
     sr_rds_insert_lead($email, 'API_Cliente_Novo');
 
 });
-
 
 add_hook('ClientClose', 1, function(array $vars) {
     $uid = (int) ($vars['userid'] ?? 0);
