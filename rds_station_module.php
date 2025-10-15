@@ -21,7 +21,7 @@ function rds_station_module_deactivate() {
 }
 
 function rds_station_module_output() {
-    echo config();
+    //echo config();
 }
 
 
