@@ -4,4 +4,4 @@ require_once __DIR__ . "/../Services/rds_station/authentication/refresh_token.ph
 
 use WHMCS\Database\Capsule;
 
-echo refresh_token();
+echo refreshToken();
