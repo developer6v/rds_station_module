@@ -38,7 +38,7 @@ add_hook('AfterShoppingCartCheckout', 1, function(array $vars) {
         $email,
         $name ?: null,
         $phone ?: null,
-        ['whmcs','checkout'],
+        ['whmcs'],
         'whmcs',
         null, 
         null, 
@@ -62,4 +62,21 @@ add_hook('AfterShoppingCartCheckout', 1, function(array $vars) {
     }
 
 
+});
+
+
+add_hook('ClientClose', 1, function(array $vars) {
+    $uid = (int) ($vars['userid'] ?? 0);
+    if ($uid <= 0) return;
+    $client = Capsule::table('tblclients')->where('id', $uid)->first();
+    if (!$client || empty($client->email)) return;
+    rd_send_api_cliente_cancelado((string) $client->email);
+});
+
+add_hook('ClientDelete', 1, function(array $vars) {
+    $uid = (int) ($vars['userid'] ?? 0);
+    if ($uid <= 0) return;
+    $client = Capsule::table('tblclients')->where('id', $uid)->first();
+    if (!$client || empty($client->email)) return;
+    rd_send_api_cliente_cancelado((string) $client->email);
 });
