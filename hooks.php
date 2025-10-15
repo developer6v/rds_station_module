@@ -62,7 +62,7 @@ add_hook('ClientClose', 1, function(array $vars) {
     $client = Capsule::table('tblclients')->where('id', $uid)->first();
     if (!$client || empty($client->email)) return;
     rd_send_api_cliente_cancelado((string) $client->email);
-    sr_rds_insert_lead($email, 'API_Cliente_Cancelado');
+    sr_rds_insert_lead($client->email, 'API_Cliente_Cancelado');
 });
 
 add_hook('ClientDelete', 1, function(array $vars) {
@@ -71,5 +71,5 @@ add_hook('ClientDelete', 1, function(array $vars) {
     $client = Capsule::table('tblclients')->where('id', $uid)->first();
     if (!$client || empty($client->email)) return;
     rd_send_api_cliente_cancelado((string) $client->email);
-    sr_rds_insert_lead($email, 'API_Cliente_Cancelado');
+    sr_rds_insert_lead($client->email, 'API_Cliente_Cancelado');
 });
