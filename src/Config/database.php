@@ -20,6 +20,17 @@ function sr_rds_station_databse () {
         ]);
     }
 
+    if (!Capsule::schema()->hasTable('sr_rds_leads')) {
+        Capsule::schema()->create('sr_rds_leads', function ($table) {
+            $table->increments('id');
+            $table->text('email')->nullable();
+            $table->text('conversion_type')->nullable();
+            $table->timestamp('created_at')->nullable();
+            $table->timestamp('updated_at')->nullable();
+        });
+    }
+
+
 }
 
     

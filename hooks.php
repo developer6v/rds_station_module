@@ -51,16 +51,7 @@ add_hook('AfterShoppingCartCheckout', 1, function(array $vars) {
         (string) ($client->companyname ?? null),
         null  
     );
-
-        // Opcional: log no activity log do WHMCS
-    try {
-        $code = is_array($resp) && isset($resp['code']) ? $resp['code'] : null;
-        $body = is_array($resp) && isset($resp['body']) ? $resp['body'] : (string)$resp;
-        logActivity('RD CONVERSION AfterShoppingCartCheckout: order '.$orderId.' | code='.$code.' | body='.substr((string)$body,0,500));
-    } catch (\Throwable $e) {
-        logActivity('erro log activity');
-    }
-
+    sr_rds_insert_lead($email, 'API_Cliente_Novo');
 
 });
 
@@ -71,6 +62,7 @@ add_hook('ClientClose', 1, function(array $vars) {
     $client = Capsule::table('tblclients')->where('id', $uid)->first();
     if (!$client || empty($client->email)) return;
     rd_send_api_cliente_cancelado((string) $client->email);
+    sr_rds_insert_lead($email, 'API_Cliente_Cancelado');
 });
 
 add_hook('ClientDelete', 1, function(array $vars) {
@@ -79,4 +71,5 @@ add_hook('ClientDelete', 1, function(array $vars) {
     $client = Capsule::table('tblclients')->where('id', $uid)->first();
     if (!$client || empty($client->email)) return;
     rd_send_api_cliente_cancelado((string) $client->email);
+    sr_rds_insert_lead($email, 'API_Cliente_Cancelado');
 });
