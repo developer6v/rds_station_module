@@ -52,5 +52,14 @@ add_hook('AfterShoppingCartCheckout', 1, function(array $vars) {
         null  
     );
 
+        // Opcional: log no activity log do WHMCS
+    try {
+        $code = is_array($resp) && isset($resp['code']) ? $resp['code'] : null;
+        $body = is_array($resp) && isset($resp['body']) ? $resp['body'] : (string)$resp;
+        logActivity('RD CONVERSION AfterShoppingCartCheckout: order '.$orderId.' | code='.$code.' | body='.substr((string)$body,0,500));
+    } catch (\Throwable $e) {
+        logActivity('erro log activity');
+    }
+
 
 });
