@@ -48,20 +48,107 @@ add_hook('ClientAdd', 1, function(array $vars) {
 
 });
 
-add_hook('ClientClose', 1, function(array $vars) {
-    $uid = (int) ($vars['userid'] ?? 0);
-    if ($uid <= 0) return;
-    $client = Capsule::table('tblclients')->where('id', $uid)->first();
+
+
+add_hook('ServiceEdit', 1, function(array $vars) {
+    $serviceId = (int) ($vars['serviceid'] ?? 0);
+    $userId    = (int) ($vars['userid']    ?? 0);
+    if ($serviceId <= 0 || $userId <= 0) return;
+
+    $service = Capsule::table('tblhosting')->where('id', $serviceId)->first();
+    if (!$service) return;
+
+    $status = (string) ($service->domainstatus ?? '');
+    if ($status !== 'Cancelled') {
+        return; // só reage a Cancelled (Suspended continua “ativo”)
+    }
+
+    $client = Capsule::table('tblclients')->where('id', $userId)->first();
     if (!$client || empty($client->email)) return;
-    rd_send_api_cliente_cancelado((string) $client->email);
-    sr_rds_insert_lead($client->email, 'API_Cliente_Cancelado');
+
+    // 1) Outros SERVIÇOS ativos (Active|Suspended), excluindo o serviço atual
+    $hasOtherServices = Capsule::table('tblhosting')
+        ->where('userid', $userId)
+        ->where('id', '!=', $serviceId)
+        ->whereIn('domainstatus', ['Active','Suspended'])
+        ->exists();
+
+    // 2) ADD-ONS ativos (Active) do mesmo cliente (join p/ pegar userid)
+    $hasActiveAddons = Capsule::table('tblhostingaddons')
+        ->join('tblhosting', 'tblhostingaddons.hostingid', '=', 'tblhosting.id')
+        ->where('tblhosting.userid', $userId)
+        ->where('tblhostingaddons.status', 'Active')
+        ->exists();
+
+    // 3) DOMÍNIOS ativos (Active) do cliente
+    $hasActiveDomains = Capsule::table('tbldomains')
+        ->where('userid', $userId)
+        ->where('status', 'Active')
+        ->exists();
+
+    $hasAnythingActive = $hasOtherServices || $hasActiveAddons || $hasActiveDomains;
+    if ($hasAnythingActive) return;
+
+    // Dedupe simples (se existir)
+    if (function_exists('sr_rds_already_has_lead') &&
+        sr_rds_already_has_lead($client->email, 'API_Cliente_Cancelado')) return;
+
+    if (function_exists('rd_send_api_cliente_cancelado')) {
+        rd_send_api_cliente_cancelado((string) $client->email);
+    }
+    if (function_exists('sr_rds_insert_lead')) {
+        sr_rds_insert_lead($client->email, 'API_Cliente_Cancelado');
+    }
 });
 
-add_hook('ClientDelete', 1, function(array $vars) {
-    $uid = (int) ($vars['userid'] ?? 0);
-    if ($uid <= 0) return;
-    $client = Capsule::table('tblclients')->where('id', $uid)->first();
+/**
+ * AFTER MODULE TERMINATE — alguns fluxos/módulos podem terminar e marcar como Cancelled
+ * Repete a mesma regra acima.
+ */
+add_hook('AfterModuleTerminate', 1, function(array $vars) {
+    $params    = $vars['params'] ?? [];
+    $serviceId = (int) ($params['serviceid'] ?? 0);
+    $userId    = (int) ($params['userid']    ?? 0);
+    if ($serviceId <= 0 || $userId <= 0) return;
+
+    $service = Capsule::table('tblhosting')->where('id', $serviceId)->first();
+    if (!$service) return;
+
+    $status = (string) ($service->domainstatus ?? '');
+    if ($status !== 'Cancelled' ) {
+        return; // só reagimos a Cancelled; Suspended conta como “ainda ativo”
+    }
+
+    $client = Capsule::table('tblclients')->where('id', $userId)->first();
     if (!$client || empty($client->email)) return;
-    rd_send_api_cliente_cancelado((string) $client->email);
-    sr_rds_insert_lead($client->email, 'API_Cliente_Cancelado');
+
+    $hasOtherServices = Capsule::table('tblhosting')
+        ->where('userid', $userId)
+        ->where('id', '!=', $serviceId)
+        ->whereIn('domainstatus', ['Active','Suspended'])
+        ->exists();
+
+    $hasActiveAddons = Capsule::table('tblhostingaddons')
+        ->join('tblhosting', 'tblhostingaddons.hostingid', '=', 'tblhosting.id')
+        ->where('tblhosting.userid', $userId)
+        ->where('tblhostingaddons.status', 'Active')
+        ->exists();
+
+    $hasActiveDomains = Capsule::table('tbldomains')
+        ->where('userid', $userId)
+        ->where('status', 'Active')
+        ->exists();
+
+    $hasAnythingActive = $hasOtherServices || $hasActiveAddons || $hasActiveDomains;
+    if ($hasAnythingActive) return;
+
+    if (function_exists('sr_rds_already_has_lead') &&
+        sr_rds_already_has_lead($client->email, 'API_Cliente_Cancelado')) return;
+
+    if (function_exists('rd_send_api_cliente_cancelado')) {
+        rd_send_api_cliente_cancelado((string) $client->email);
+    }
+    if (function_exists('sr_rds_insert_lead')) {
+        sr_rds_insert_lead($client->email, 'API_Cliente_Cancelado');
+    }
 });
