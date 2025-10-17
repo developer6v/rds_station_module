@@ -58,6 +58,7 @@ add_hook('ServiceEdit', 1, function(array $vars) {
 
     $service = Capsule::table('tblhosting')->where('id', $serviceId)->first();
     if (!$service) return;
+        logActivity("service encontrado ");
 
     $status = (string) ($service->domainstatus ?? '');
     if (!in_array($status, ['Cancelled','Terminated'], true)) {
