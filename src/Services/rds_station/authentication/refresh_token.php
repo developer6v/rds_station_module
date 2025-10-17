@@ -32,7 +32,7 @@ function refreshToken() {
     $update = ["access_token" => $json["access_token"]];
     if (!empty($json["refresh_token"])) $update["refresh_token"] = $json["refresh_token"];
     Capsule::table("sr_rds_station_config")->where("id", 1)->update($update);
-
+    logActivity("refresh token: " . $json["refresh_token"]);
     return $json["access_token"];
 }
 
