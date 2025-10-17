@@ -51,6 +51,7 @@ add_hook('ClientAdd', 1, function(array $vars) {
 
 
 add_hook('ServiceEdit', 1, function(array $vars) {
+        logActivity("service eddit chamado ");
     $serviceId = (int) ($vars['serviceid'] ?? 0);
     $userId    = (int) ($vars['userid']    ?? 0);
     if ($serviceId <= 0 || $userId <= 0) return;
