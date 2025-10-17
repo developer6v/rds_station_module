@@ -59,28 +59,25 @@ add_hook('ServiceEdit', 1, function(array $vars) {
     if (!$service) return;
 
     $status = (string) ($service->domainstatus ?? '');
-    if ($status !== 'Cancelled') {
-        return; // só reage a Cancelled (Suspended continua “ativo”)
+    if (!in_array($status, ['Cancelled','Terminated'], true)) {
+        return;
     }
 
     $client = Capsule::table('tblclients')->where('id', $userId)->first();
     if (!$client || empty($client->email)) return;
 
-    // 1) Outros SERVIÇOS ativos (Active|Suspended), excluindo o serviço atual
     $hasOtherServices = Capsule::table('tblhosting')
         ->where('userid', $userId)
         ->where('id', '!=', $serviceId)
         ->whereIn('domainstatus', ['Active','Suspended'])
         ->exists();
 
-    // 2) ADD-ONS ativos (Active) do mesmo cliente (join p/ pegar userid)
     $hasActiveAddons = Capsule::table('tblhostingaddons')
         ->join('tblhosting', 'tblhostingaddons.hostingid', '=', 'tblhosting.id')
         ->where('tblhosting.userid', $userId)
         ->where('tblhostingaddons.status', 'Active')
         ->exists();
 
-    // 3) DOMÍNIOS ativos (Active) do cliente
     $hasActiveDomains = Capsule::table('tbldomains')
         ->where('userid', $userId)
         ->where('status', 'Active')
@@ -101,10 +98,7 @@ add_hook('ServiceEdit', 1, function(array $vars) {
     }
 });
 
-/**
- * AFTER MODULE TERMINATE — alguns fluxos/módulos podem terminar e marcar como Cancelled
- * Repete a mesma regra acima.
- */
+
 add_hook('AfterModuleTerminate', 1, function(array $vars) {
     $params    = $vars['params'] ?? [];
     $serviceId = (int) ($params['serviceid'] ?? 0);
@@ -115,10 +109,9 @@ add_hook('AfterModuleTerminate', 1, function(array $vars) {
     if (!$service) return;
 
     $status = (string) ($service->domainstatus ?? '');
-    if ($status !== 'Cancelled' ) {
-        return; // só reagimos a Cancelled; Suspended conta como “ainda ativo”
+    if (!in_array($status, ['Cancelled','Terminated'], true)) {
+        return;
     }
-
     $client = Capsule::table('tblclients')->where('id', $userId)->first();
     if (!$client || empty($client->email)) return;
 

@@ -24,14 +24,16 @@ function rd_send_conversion(
     if (!$cfg) return ['code'=>0,'body'=>'CFG_MISSING'];
     $token = (string) ($cfg->access_token ?? '');
 
+    // Prepara os tags
     if (is_string($tags)) {
-        $tags = array_values(array_filter(array_map('trim', explode(',', $tags)), fn($v)=>$v!==''));
+        $tags = array_values(array_filter(array_map('trim', explode(',', $tags)), fn($v)=>$v!==''));  
     } elseif (!is_array($tags)) {
         $tags = [];
     }
 
+    // Prepara os dados do payload
     $payload = array_filter([
-        'conversion_identifier' => "API_Cliente_Novo",
+        'conversion_identifier' => $conversion_identifier,
         'email' => $email,
         'name' => $name,
         'phone' => $phone,
@@ -48,6 +50,7 @@ function rd_send_conversion(
         'job_title' => $job_title
     ], fn($v) => $v !== null && $v !== '');
 
+    // Adiciona as tags, se existirem
     if (!empty($tags)) $payload['tags'] = array_values($tags);
 
     $body = json_encode([
@@ -56,21 +59,41 @@ function rd_send_conversion(
         'payload' => $payload
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-    $ch = curl_init('https://api.rd.services/platform/events?event_type=conversion');
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => [
-            'accept: application/json',
-            'content-type: application/json',
-            'authorization: Bearer ' . $token
-        ],
-        CURLOPT_POSTFIELDS => $body,
-        CURLOPT_TIMEOUT => 20
-    ]);
-    $res = curl_exec($ch);
-    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    $do = function($t) use ($body) {
+        $ch = curl_init('https://api.rd.services/platform/events?event_type=conversion');
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'accept: application/json',
+                'content-type: application/json',
+                'authorization: Bearer ' . $t
+            ],
+            CURLOPT_POSTFIELDS => $body,
+            CURLOPT_TIMEOUT => 20
+        ]);
+        $res = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return [$code, $res];
+    };
 
-    return ['code'=>$code,'body'=>$res ?: ''];
+    // Primeira tentativa de envio com o token atual
+    [$code, $res] = $do($token);
+
+    // Se o código de resposta for 401 (token expirado), tenta renovar o token e envia novamente
+    if ($code === 401) {
+        // Chama a função para renovar o token
+        if (function_exists('refresh_token')) refresh_token();
+
+        // Pega o novo token após a renovação
+        $cfg = Capsule::table('sr_rds_station_config')->where('id', 1)->first();
+        $token = (string) ($cfg->access_token ?? '');
+
+        // Segunda tentativa com o novo token
+        [$code, $res] = $do($token);
+    }
+
+    // Retorna a resposta, se for bem-sucedido retorna o corpo da resposta
+    return $code === 200 ? $res : false;
 }
