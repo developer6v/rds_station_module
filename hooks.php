@@ -87,6 +87,7 @@ add_hook('ServiceEdit', 1, function(array $vars) {
 
     $hasAnythingActive = $hasOtherServices || $hasActiveAddons || $hasActiveDomains;
     if ($hasAnythingActive) return;
+        logActivity("tem outros ativo ");
 
     // Dedupe simples (se existir)
     if (function_exists('sr_rds_already_has_lead') &&
