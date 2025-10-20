@@ -96,5 +96,5 @@ function rd_send_conversion(
     }
 
     // Retorna a resposta, se for bem-sucedido retorna o corpo da resposta
-    return $code === 200 ? $res : false;
+    return $code === 200 ? $res : "false";
 }
