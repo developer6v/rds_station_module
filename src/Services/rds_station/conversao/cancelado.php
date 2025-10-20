@@ -1,6 +1,7 @@
 <?php
 
 use WHMCS\Database\Capsule;
+require_once __DIR__ . "/../authentication/refresh_token.php";
 
 function rd_send_api_cliente_cancelado(string $email) {
     $cfg = Capsule::table('sr_rds_station_config')->where('id', 1)->first();

@@ -1,7 +1,6 @@
 <?php
 
 use WHMCS\Database\Capsule;
-require_once __DIR__ . "/../authentication/refresh_token.php";
 
 function rd_send_conversion(
     string $conversion_identifier,
@@ -96,5 +95,5 @@ function rd_send_conversion(
     }
 
     // Retorna a resposta, se for bem-sucedido retorna o corpo da resposta
-    return $code === 200 ? $res : "false";
+    return $code === 200 ? $res : false;
 }
