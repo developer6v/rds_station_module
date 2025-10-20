@@ -1,7 +1,6 @@
 <?php
 
 use WHMCS\Database\Capsule;
-require_once __DIR__ . "/../authentication/refresh_token.php";
 
 function rd_send_api_cliente_cancelado(string $email) {
     $cfg = Capsule::table('sr_rds_station_config')->where('id', 1)->first();
@@ -38,7 +37,9 @@ function rd_send_api_cliente_cancelado(string $email) {
 
     [$code, $res] = $do($token);
     if ($code === 401) {
-        if (function_exists('refresh_token')) refresh_token();
+        if (function_exists('refreshToken')) {
+             refreshToken();
+        } 
         $cfg = Capsule::table('sr_rds_station_config')->where('id', 1)->first();
         $token = (string) ($cfg->access_token ?? '');
         [$code, $res] = $do($token);

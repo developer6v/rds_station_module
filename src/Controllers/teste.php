@@ -38,7 +38,7 @@ if (!$init || !file_exists($init)) { echo "init.php NÃO encontrado em {$init}\n
 require_once $init;
 
 // 2) include do cancelado.php
-$cancelado = realpath(__DIR__ . '/../Services/rds_station/conversao/cancelado.php');
+$cancelado = realpath(__DIR__ . '/../Services/rds_station/conversao/novo.php');
 rd_dbg('cancelado path', $cancelado);
 if (!$cancelado || !file_exists($cancelado)) { echo "cancelado.php NÃO encontrado em {$cancelado}\n"; exit; }
 require_once $cancelado;

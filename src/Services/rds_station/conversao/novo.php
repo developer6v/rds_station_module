@@ -84,7 +84,7 @@ function rd_send_conversion(
     // Se o código de resposta for 401 (token expirado), tenta renovar o token e envia novamente
     if ($code === 401) {
         // Chama a função para renovar o token
-        if (function_exists('refresh_token')) refresh_token();
+        if (function_exists('refreshToken')) refreshToken();
 
         // Pega o novo token após a renovação
         $cfg = Capsule::table('sr_rds_station_config')->where('id', 1)->first();
