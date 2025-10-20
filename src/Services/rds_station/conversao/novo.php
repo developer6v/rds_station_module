@@ -1,6 +1,7 @@
 <?php
 
 use WHMCS\Database\Capsule;
+require_once __DIR__ . "/../authentication/refresh_token.php";
 
 function rd_send_conversion(
     string $conversion_identifier,
