@@ -1,15 +1,20 @@
 <?php
 
+use WHMCS\Database\Capsule;
+
+
 
 function send_to_script_wprocketelementor($userid) {
-    $id = 1;
-    $name = "teste";
-    $email = "teste@teste.com.br";
+
+    $client = Capsule::table("tblclients")->where("id", $userid)->first();
+    $email = $client->email;
+    $name = $client->firstname;
+    
 
     $ch = curl_init("https://script.google.com/macros/s/AKfycbx4AmmVdgNdCGBiaMngu-Ix70jeomQdl-h9ExZiiFccZ7G2Hv9bE0Tsm6611rIvaoLf/exec");
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-        "id" => $id,
+        "id" => $userid,
         "name" => $name,
         "email" => $email,
     ]));
