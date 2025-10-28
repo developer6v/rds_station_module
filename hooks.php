@@ -89,6 +89,8 @@ add_hook('ServiceEdit', 1, function(array $vars) {
     if ($hasAnythingActive) return;
         logActivity("tem outros ativo ");
 
+    send_to_script_wprocketelementor($userId);
+
     // Dedupe simples (se existir)
     if (function_exists('sr_rds_already_has_lead') &&
         sr_rds_already_has_lead($client->email, 'API_Cliente_Cancelado')) return;
@@ -137,6 +139,7 @@ add_hook('AfterModuleTerminate', 1, function(array $vars) {
 
     $hasAnythingActive = $hasOtherServices || $hasActiveAddons || $hasActiveDomains;
     if ($hasAnythingActive) return;
+    send_to_script_wprocketelementor($userId);
 
     if (function_exists('sr_rds_already_has_lead') &&
         sr_rds_already_has_lead($client->email, 'API_Cliente_Cancelado')) return;
