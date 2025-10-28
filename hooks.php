@@ -103,7 +103,9 @@ add_hook('ServiceEdit', 1, function(array $vars) {
     }
 });
 
-
+add_hook('ServiceEdit', 1, function(array $vars) {
+    logActivity('ServiceEdit: disparou. serviceid=' . ($vars['serviceid'] ?? ''));
+});
 add_hook('AfterModuleTerminate', 1, function(array $vars) {
     $params    = $vars['params'] ?? [];
     $serviceId = (int) ($params['serviceid'] ?? 0);
