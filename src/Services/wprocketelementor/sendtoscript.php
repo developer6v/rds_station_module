@@ -1,8 +1,6 @@
 <?php
 
 
-
-<?php
 function send_to_script_wprocketelementor($userid) {
     $id = 1;
     $name = "teste";
